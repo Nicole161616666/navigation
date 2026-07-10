@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>添加到资源中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 320px;
+            padding: 16px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f7fa;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e6eb;
+        }
+        
+        .header .icon {
+            font-size: 24px;
+        }
+        
+        .header h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2329;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #646a73;
+            margin-bottom: 4px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #e5e6eb;
+            border-radius: 4px;
+            font-size: 13px;
+            outline: none;
+            background-color: #fff;
+            color: #1f2329;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #4a6cf7;
+        }
+        
+        .form-group input::placeholder {
+            color: #8c8c8c;
+        }
+        
+        .form-group .hint {
+            font-size: 11px;
+            color: #8c8c8c;
+            margin-top: 4px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background-color: #4a6cf7;
+            color: #fff;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5af0;
+        }
+        
+        .btn-secondary {
+            background-color: #fff;
+            color: #646a73;
+            border: 1px solid #e5e6eb;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .direct-add {
+            text-align: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #e5e6eb;
+        }
+        
+        .direct-add button {
+            background: none;
+            border: none;
+            color: #4a6cf7;
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        .direct-add button:hover {
+            color: #3a5af0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="icon">🔗</span>
+        <h2>添加到资源中心</h2>
+    </div>
+    
+    <form id="link-form">
+        <div class="form-group">
+            <label>链接名称</label>
+            <input type="text" id="link-title" placeholder="页面标题" required>
+        </div>
+        
+        <div class="form-group">
+            <label>URL</label>
+            <input type="text" id="link-url" placeholder="页面链接" required>
+            <p class="hint">需以 http:// 或 https:// 开头</p>
+        </div>
+        
+        <div class="form-group">
+            <label>分类</label>
+            <select id="link-category">
+                <option value="未分类">未分类</option>
+                <option value="开发工具">开发工具</option>
+                <option value="项目管理">项目管理</option>
+                <option value="设计资源">设计资源</option>
+                <option value="测试环境">测试环境</option>
+                <option value="监控告警">监控告警</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>标签</label>
+            <input type="text" id="link-tags" placeholder="多个标签用英文逗号分隔">
+        </div>
+        
+        <div class="actions">
+            <button type="button" class="btn btn-secondary" onclick="closePopup()">取消</button>
+            <button type="submit" class="btn btn-primary">添加</button>
+        </div>
+        
+        <div class="direct-add">
+            <button type="button" onclick="directAdd()">直接添加（跳过编辑）</button>
+        </div>
+    </form>
+    
+    <script src="popup.js"></script>
+</body>
+</html>

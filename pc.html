@@ -1,0 +1,1202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4a6cf7">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <title>导航链接管理器</title>
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --primary-hover: #3a5af0;
+            --success-color: #52c41a;
+            --warning-color: #faad14;
+            --danger-color: #ff4d4f;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #1f2329;
+            --text-secondary: #646a73;
+            --border-color: #e5e6eb;
+            --sidebar-width: 260px;
+            --chart-bar-bg: rgba(74, 108, 247, 0.15);
+            --chart-bar-fill: #4a6cf7;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #667eea;
+            --primary-hover: #5a6fd6;
+            --success-color: #69db7c;
+            --warning-color: #fab005;
+            --danger-color: #ff6b6b;
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-primary: #e8e8e8;
+            --text-secondary: #8b8b8b;
+            --border-color: #2d2d44;
+            --chart-bar-bg: rgba(102, 126, 234, 0.15);
+            --chart-bar-fill: #667eea;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container { display: flex; min-height: 100vh; }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .sidebar-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-header h1 { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .sidebar-header p { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .nav-section { margin-bottom: 20px; }
+
+        .nav-section-title {
+            font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;
+        }
+
+        .nav-item {
+            display: flex; align-items: center;
+            padding: 10px 12px; border-radius: 6px;
+            cursor: pointer; font-size: 14px; color: var(--text-primary);
+            transition: background-color 0.2s; margin-bottom: 4px;
+        }
+
+        .nav-item:hover { background-color: rgba(74, 108, 247, 0.08); }
+        .nav-item.active { background-color: rgba(74, 108, 247, 0.15); color: var(--primary-color); }
+        .nav-item .icon { margin-right: 10px; font-size: 16px; }
+        .nav-item .count {
+            margin-left: auto; font-size: 12px; color: var(--text-secondary);
+            background-color: var(--bg-color); padding: 2px 8px; border-radius: 10px;
+        }
+
+        .category-list { list-style: none; }
+
+        .category-item {
+            display: flex; align-items: center;
+            padding: 8px 12px; border-radius: 6px;
+            cursor: pointer; font-size: 13px; color: var(--text-primary);
+            transition: background-color 0.2s; margin-bottom: 2px;
+        }
+
+        .category-item:hover { background-color: rgba(74, 108, 247, 0.08); }
+        .category-item.active { background-color: rgba(74, 108, 247, 0.15); color: var(--primary-color); }
+        .category-item .color-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 10px 16px; border: none; border-radius: 6px;
+            font-size: 14px; font-weight: 500; cursor: pointer;
+            transition: all 0.2s; text-decoration: none;
+        }
+
+        .btn-primary { background-color: var(--primary-color); color: #fff; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+
+        .btn-secondary {
+            background-color: var(--bg-color); color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover { background-color: rgba(0, 0, 0, 0.05); }
+
+        .btn-danger { background-color: rgba(255, 77, 79, 0.1); color: var(--danger-color); }
+        .btn-danger:hover { background-color: rgba(255, 77, 79, 0.2); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        .main-content {
+            flex: 1; margin-left: var(--sidebar-width);
+            padding: 24px; overflow-y: auto; min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .page-title { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+        .page-subtitle { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+        .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .search-box {
+            display: flex; align-items: center;
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 8px 12px; font-size: 14px;
+            width: 280px; transition: border-color 0.2s, background-color 0.3s;
+        }
+
+        .search-box:focus-within { border-color: var(--primary-color); }
+        .search-box input {
+            border: none; outline: none; flex: 1;
+            background: transparent; font-size: 14px; color: var(--text-primary);
+        }
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .search-box .icon { margin-right: 8px; color: var(--text-secondary); }
+
+        .theme-toggle {
+            width: 36px; height: 36px; border-radius: 6px;
+            border: 1px solid var(--border-color); background-color: var(--card-bg);
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; transition: all 0.2s;
+        }
+        .theme-toggle:hover { background-color: var(--bg-color); }
+
+        .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+
+        .filter-tag {
+            display: inline-flex; align-items: center;
+            padding: 4px 12px; background-color: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 20px;
+            font-size: 12px; color: var(--text-secondary); cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-tag:hover { border-color: var(--primary-color); color: var(--primary-color); }
+        .filter-tag.active {
+            background-color: rgba(74, 108, 247, 0.15);
+            border-color: var(--primary-color); color: var(--primary-color);
+        }
+
+        .stats-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+
+        .stat-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; background-color: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 8px;
+        }
+
+        .stat-item .icon { font-size: 18px; }
+        .stat-item .value { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+        .stat-item .label { font-size: 12px; color: var(--text-secondary); }
+
+        .recent-bar {
+            display: flex; align-items: center; gap: 8px;
+            padding: 12px; background-color: var(--card-bg);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            margin-bottom: 20px; overflow-x: auto; scrollbar-width: none;
+        }
+
+        .recent-bar::-webkit-scrollbar { display: none; }
+        .recent-bar-title {
+            font-size: 12px; font-weight: 600; color: var(--text-secondary);
+            white-space: nowrap; flex-shrink: 0; margin-right: 8px;
+        }
+
+        .recent-link {
+            display: flex; align-items: center; gap: 6px;
+            padding: 6px 10px; background-color: var(--bg-color);
+            border-radius: 20px; font-size: 12px; color: var(--text-primary);
+            cursor: pointer; white-space: nowrap; transition: background-color 0.2s;
+        }
+
+        .recent-link:hover { background-color: rgba(74, 108, 247, 0.1); color: var(--primary-color); }
+        .recent-link .favicon { font-size: 12px; }
+
+        .batch-mode-bar {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 16px; background-color: rgba(74, 108, 247, 0.1);
+            border: 1px solid var(--primary-color); border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .batch-mode-bar .batch-info { font-size: 14px; color: var(--primary-color); font-weight: 500; }
+        .batch-mode-bar .batch-info strong { color: var(--text-primary); }
+
+        .link-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+
+        .link-card {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 16px; cursor: pointer;
+            transition: all 0.2s; position: relative;
+        }
+
+        .link-card:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); transform: translateY(-2px); }
+        .link-card.selected { border-color: var(--primary-color); background-color: rgba(74, 108, 247, 0.05); }
+
+        .link-card-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .link-card-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; line-height: 1.4; }
+        .link-card-url {
+            font-size: 12px; color: var(--text-secondary); word-break: break-all;
+            line-height: 1.4; cursor: pointer;
+        }
+        .link-card-url:hover { color: var(--primary-color); text-decoration: underline; }
+
+        .link-card-favicon {
+            width: 36px; height: 36px; border-radius: 8px;
+            background-color: var(--bg-color); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0; margin-right: 12px;
+        }
+
+        .link-card-body { display: flex; }
+        .link-card-meta { flex: 1; }
+
+        .link-card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+
+        .link-tag {
+            display: inline-flex; align-items: center;
+            padding: 2px 8px; background-color: rgba(74, 108, 247, 0.1);
+            color: var(--primary-color); border-radius: 4px; font-size: 11px;
+        }
+
+        .link-tag::before { content: '#'; margin-right: 2px; }
+
+        .link-card-category {
+            display: inline-flex; align-items: center;
+            padding: 2px 8px; background-color: rgba(250, 173, 20, 0.1);
+            color: #d48806; border-radius: 4px; font-size: 11px; margin-top: 6px;
+        }
+
+        .link-card-stats {
+            display: flex; align-items: center; gap: 16px;
+            margin-top: 12px; font-size: 12px; color: var(--text-secondary);
+        }
+
+        .visit-count { display: flex; align-items: center; gap: 4px; }
+        .visit-count .icon { font-size: 14px; }
+
+        .link-card-actions {
+            position: absolute; top: 10px; right: 10px;
+            display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s;
+        }
+
+        .link-card:hover .link-card-actions { opacity: 1; }
+
+        .action-btn {
+            width: 28px; height: 28px; border: none;
+            background-color: rgba(0, 0, 0, 0.05); border-radius: 4px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; transition: background-color 0.2s;
+        }
+
+        .action-btn:hover { background-color: rgba(0, 0, 0, 0.1); }
+        .action-btn.favorite { color: #d48806; }
+        .action-btn.favorite.active { background-color: rgba(250, 173, 20, 0.15); }
+        .action-btn.edit { color: var(--primary-color); }
+        .action-btn.delete { color: var(--danger-color); }
+
+        .checkbox-wrapper {
+            position: absolute; top: 10px; right: 10px;
+            opacity: 0; transition: opacity 0.2s;
+        }
+
+        .batch-mode .checkbox-wrapper,
+        .link-card.selected .checkbox-wrapper { opacity: 1; }
+
+        .batch-mode .link-card-actions { right: 40px; }
+        .batch-mode .link-card:hover .link-card-actions { opacity: 1; }
+
+        .checkbox-wrapper input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+        .visit-trend { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-color); }
+        .trend-title { font-size: 11px; color: var(--text-secondary); margin-bottom: 8px; }
+
+        .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 32px; }
+
+        .trend-bar {
+            flex: 1; background-color: var(--chart-bar-bg);
+            border-radius: 2px; min-height: 4px; transition: height 0.3s;
+        }
+
+        .trend-bar.fill { background-color: var(--chart-bar-fill); }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .empty-state .icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 16px; font-weight: 500; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: all 0.2s;
+        }
+
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+
+        .modal {
+            background-color: var(--card-bg); border-radius: 12px;
+            width: 90%; max-width: 480px; max-height: 90vh;
+            overflow-y: auto; transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .modal-overlay.show .modal { transform: scale(1); }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 24px; border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+
+        .modal-close {
+            background: none; border: none; font-size: 24px;
+            cursor: pointer; color: var(--text-secondary);
+            padding: 4px; border-radius: 4px;
+        }
+
+        .modal-close:hover { background-color: var(--bg-color); }
+
+        .modal-body { padding: 24px; }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 500;
+            margin-bottom: 6px; color: var(--text-primary);
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%; padding: 10px 12px;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 14px; outline: none; transition: border-color 0.2s;
+            background-color: var(--bg-color); color: var(--text-primary);
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-color); }
+        .form-group input::placeholder, .form-group textarea::placeholder { color: var(--text-secondary); }
+
+        .form-group textarea { resize: vertical; min-height: 60px; }
+
+        .form-group .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .form-group .checkbox-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 10px;
+            padding: 16px 24px; border-top: 1px solid var(--border-color);
+        }
+
+        .import-export-area {
+            background-color: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 24px; margin-bottom: 20px;
+        }
+
+        .import-export-area h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .import-export-area .btn { margin-right: 10px; margin-bottom: 10px; }
+
+        .import-area { margin-top: 16px; }
+
+        .import-area textarea {
+            width: 100%; min-height: 150px; padding: 12px;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            font-size: 13px; font-family: monospace; resize: vertical;
+            outline: none; background-color: var(--bg-color); color: var(--text-primary);
+        }
+
+        .import-area textarea:focus { border-color: var(--primary-color); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>🔗 导航管理</h1>
+                <p>快速访问常用链接</p>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">导航</div>
+                <div class="nav-item active" data-view="all">
+                    <span class="icon">📋</span>
+                    <span>全部链接</span>
+                    <span class="count" id="all-count">0</span>
+                </div>
+                <div class="nav-item" data-view="favorites">
+                    <span class="icon">⭐</span>
+                    <span>我的收藏</span>
+                    <span class="count" id="favorites-count">0</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-section-title">分类</div>
+                <ul class="category-list" id="category-list"></ul>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <div>
+                    <h1 class="page-title" id="page-title">全部链接</h1>
+                    <p class="page-subtitle" id="page-subtitle">管理你的常用链接</p>
+                </div>
+                <div class="toolbar">
+                    <button class="btn btn-primary" onclick="openAddLinkModal()">+ 添加链接</button>
+                    <button class="btn btn-secondary" onclick="openSettingsModal()">⚙️ 设置</button>
+                    <div class="search-box">
+                        <span class="icon">🔍</span>
+                        <input type="text" placeholder="搜索链接... (Ctrl+K)" id="search-input">
+                    </div>
+                    <button class="btn btn-sm btn-secondary" onclick="toggleBatchMode()" id="batch-btn">批量</button>
+                    <button class="theme-toggle" onclick="toggleTheme()" id="theme-toggle">🌙</button>
+                </div>
+            </div>
+
+            <div class="stats-bar" id="stats-bar">
+                <div class="stat-item">
+                    <span class="icon">🔗</span>
+                    <div>
+                        <div class="value" id="total-links">0</div>
+                        <div class="label">总链接数</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="icon">⭐</span>
+                    <div>
+                        <div class="value" id="total-favorites">0</div>
+                        <div class="label">收藏数</div>
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <span class="icon">👆</span>
+                    <div>
+                        <div class="value" id="total-clicks">0</div>
+                        <div class="label">总点击数</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="recent-bar" id="recent-bar">
+                <span class="recent-bar-title">最近访问：</span>
+            </div>
+
+            <div class="filter-tags" id="filter-tags"></div>
+
+            <div id="batch-mode-bar" class="batch-mode-bar" style="display: none;">
+                <span class="batch-info">已选择 <strong id="selected-count">0</strong> 个链接</span>
+                <select id="batch-category" class="btn btn-sm btn-secondary" style="padding: 6px 10px;"></select>
+                <button class="btn btn-sm btn-secondary" onclick="batchMove()">移动</button>
+                <button class="btn btn-sm btn-danger" onclick="batchDelete()">删除</button>
+                <button class="btn btn-sm btn-secondary" onclick="toggleBatchMode()">取消</button>
+            </div>
+
+            <div class="link-grid" id="link-grid"></div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="link-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">添加链接</h2>
+                <button class="modal-close" onclick="closeModal('link-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="link-form">
+                    <input type="hidden" id="link-id">
+                    <div class="form-group">
+                        <label>链接名称 <span style="color: var(--danger-color);">*</span></label>
+                        <input type="text" id="link-title" placeholder="如：Jenkins 构建" required>
+                    </div>
+                    <div class="form-group">
+                        <label>URL <span style="color: var(--danger-color);">*</span></label>
+                        <input type="text" id="link-url" placeholder="https://..." required>
+                        <p class="hint">请输入完整的URL地址，需以 http:// 或 https:// 开头</p>
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <input type="text" id="link-category" list="category-options" placeholder="选择已有分类或输入新分类">
+                        <datalist id="category-options"></datalist>
+                        <p class="hint">输入新分类名称将自动创建</p>
+                    </div>
+                    <div class="form-group">
+                        <label>标签</label>
+                        <input type="text" id="link-tags" placeholder="多个标签用英文逗号分隔，如：前端,部署,工具">
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="link-favorite">
+                            添加到收藏
+                        </label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('link-modal')">取消</button>
+                <button class="btn btn-primary" onclick="saveLink()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settings-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>设置</h2>
+                <button class="modal-close" onclick="closeModal('settings-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-export-area">
+                    <h3>📦 数据导入/导出</h3>
+                    <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('import-file').click()">导入数据</button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importFromFile(event)">
+                    <div class="import-area">
+                        <textarea id="import-textarea" placeholder="粘贴JSON数据在此处导入..."></textarea>
+                        <button class="btn btn-primary" style="margin-top: 10px;" onclick="importFromText()">从文本导入</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('settings-modal')">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'team_nav_data';
+        const THEME_KEY = 'team_nav_theme';
+        const MAX_RECENT_VISITS = 10;
+
+        let data = {
+            links: [],
+            categories: [
+                { id: '1', name: '开发工具', color: '#4a6cf7' },
+                { id: '2', name: '项目管理', color: '#52c41a' },
+                { id: '3', name: '设计资源', color: '#ff7875' },
+                { id: '4', name: '测试环境', color: '#faad14' },
+                { id: '5', name: '监控告警', color: '#722ed1' },
+                { id: '6', name: '未分类', color: '#8c8c8c' }
+            ]
+        };
+
+        let currentView = 'all';
+        let currentCategory = null;
+        let selectedLinks = new Set();
+        let searchQuery = '';
+        let isBatchMode = false;
+
+        function init() {
+            loadData();
+            loadTheme();
+            renderCategories();
+            renderLinks();
+            renderTags();
+            renderRecentBar();
+            updateStats();
+
+            handleUrlParams();
+
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                searchQuery = e.target.value.toLowerCase();
+                renderLinks();
+                renderTags();
+            });
+
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    currentView = item.dataset.view;
+                    currentCategory = null;
+                    updatePageTitle();
+                    renderLinks();
+                    renderTags();
+                });
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                    e.preventDefault();
+                    document.getElementById('search-input').focus();
+                }
+            });
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    data = { ...data, ...parsed };
+                }
+            } catch (e) { console.error('Failed to load data:', e); }
+        }
+
+        function saveData() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+            catch (e) { console.error('Failed to save data:', e); }
+        }
+
+        function loadTheme() {
+            const theme = localStorage.getItem(THEME_KEY) || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem(THEME_KEY, newTheme);
+        }
+
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[char]));
+        }
+
+        function escapeJsString(str) {
+            if (!str) return '';
+            return str.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+        }
+
+        function validateUrl(url) { return /^(https?:\/\/)[^\s$.?#].[^\s]*$/i.test(url); }
+
+        function getCategoryIdByName(name) {
+            const trimmed = name.trim();
+            if (!trimmed) return '6';
+            let cat = data.categories.find(c => c.name.trim().toLowerCase() === trimmed.toLowerCase());
+            if (cat) return cat.id;
+            const colors = ['#4a6cf7', '#52c41a', '#ff7875', '#faad14', '#722ed1', '#13c2c2', '#eb2f96', '#fa541c', '#8c8c8c'];
+            cat = { id: generateId(), name: trimmed, color: colors[data.categories.length % colors.length] };
+            data.categories.push(cat);
+            return cat.id;
+        }
+
+        function renderCategories() {
+            const list = document.getElementById('category-list');
+            list.innerHTML = data.categories.map(cat => `
+                <li class="category-item ${currentCategory === cat.id ? 'active' : ''}" 
+                    data-category="${cat.id}"
+                    onclick="selectCategory('${escapeJsString(cat.id)}')">
+                    <span class="color-dot" style="background-color: ${cat.color}"></span>
+                    <span>${escapeHtml(cat.name)}</span>
+                    <span class="count">${data.links.filter(l => l.categoryId === cat.id).length}</span>
+                </li>
+            `).join('');
+
+            const batchCategory = document.getElementById('batch-category');
+            if (batchCategory) {
+                batchCategory.innerHTML = data.categories.map(cat => 
+                    `<option value="${cat.id}">${escapeHtml(cat.name)}</option>`
+                ).join('');
+            }
+        }
+
+        function selectCategory(categoryId) {
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelectorAll('.category-item').forEach(i => i.classList.remove('active'));
+            document.querySelector(`[data-category="${categoryId}"]`).classList.add('active');
+            currentCategory = categoryId;
+            currentView = 'category';
+            updatePageTitle();
+            renderLinks();
+            renderTags();
+        }
+
+        function updatePageTitle() {
+            const title = document.getElementById('page-title');
+            const subtitle = document.getElementById('page-subtitle');
+            if (currentView === 'all') {
+                title.textContent = '全部链接';
+                subtitle.textContent = '管理你的常用链接';
+            } else if (currentView === 'favorites') {
+                title.textContent = '我的收藏';
+                subtitle.textContent = '快速访问收藏的链接';
+            } else if (currentView === 'category') {
+                const cat = data.categories.find(c => c.id === currentCategory);
+                title.textContent = cat ? cat.name : '分类链接';
+                subtitle.textContent = `查看「${cat ? cat.name : ''}」分类下的链接`;
+            }
+        }
+
+        function getFilteredLinks() {
+            let filtered = data.links;
+            if (currentView === 'favorites') filtered = filtered.filter(l => l.favorite);
+            else if (currentView === 'category' && currentCategory) filtered = filtered.filter(l => l.categoryId === currentCategory);
+
+            if (searchQuery) {
+                filtered = filtered.filter(l => 
+                    l.title.toLowerCase().includes(searchQuery) ||
+                    l.url.toLowerCase().includes(searchQuery) ||
+                    (l.tags && l.tags.some(t => t.toLowerCase().includes(searchQuery)))
+                );
+            }
+
+            filtered.sort((a, b) => {
+                if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+                return (b.visitCount || 0) - (a.visitCount || 0);
+            });
+
+            return filtered;
+        }
+
+        function getWeeklyVisitData(link) {
+            const history = link.history || [];
+            const now = new Date();
+            const data = new Array(7).fill(0);
+            for (let i = 6; i >= 0; i--) {
+                const startOfDay = new Date(now);
+                startOfDay.setHours(0, 0, 0, 0);
+                startOfDay.setDate(startOfDay.getDate() - i);
+                const endOfDay = new Date(startOfDay);
+                endOfDay.setHours(23, 59, 59, 999);
+                data[6 - i] = history.filter(t => t >= startOfDay.getTime() && t <= endOfDay.getTime()).length;
+            }
+            return data;
+        }
+
+        function renderTrendBars(link) {
+            const weeklyData = getWeeklyVisitData(link);
+            const maxValue = Math.max(...weeklyData, 1);
+            return weeklyData.map(count => {
+                const height = maxValue > 0 ? (count / maxValue) * 100 : 0;
+                return `<div class="trend-bar ${count > 0 ? 'fill' : ''}" style="height: ${Math.max(height, 10)}%;"></div>`;
+            }).join('');
+        }
+
+        function renderLinks() {
+            const grid = document.getElementById('link-grid');
+            const filtered = getFilteredLinks();
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔗</div>
+                        <h3>${searchQuery ? '未找到匹配的链接' : '暂无链接'}</h3>
+                        <p>${searchQuery ? '尝试更换搜索关键词' : '点击左侧「添加链接」按钮开始添加'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(link => {
+                const category = data.categories.find(c => c.id === link.categoryId);
+                const isSelected = selectedLinks.has(link.id);
+                return `
+                    <div class="link-card ${isSelected ? 'selected' : ''}" onclick="handleLinkClick('${escapeJsString(link.id)}', event)">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" ${isSelected ? 'checked' : ''} 
+                                onchange="toggleLinkSelection('${escapeJsString(link.id)}', this.checked)">
+                        </div>
+                        <div class="link-card-header">
+                            <div>
+                                <div class="link-card-title">${escapeHtml(link.title)}</div>
+                                <div class="link-card-url" onclick="event.stopPropagation(); visitLink('${escapeJsString(link.id)}', '${escapeJsString(link.url)}')">${escapeHtml(truncateUrl(link.url))}</div>
+                            </div>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="link-card-favicon">${getFaviconEmoji(link.url)}</div>
+                            <div class="link-card-meta">
+                                ${category ? `<div class="link-card-category">${escapeHtml(category.name)}</div>` : ''}
+                                ${link.tags && link.tags.length > 0 ? `
+                                    <div class="link-card-tags">
+                                        ${link.tags.map(tag => `<span class="link-tag">${escapeHtml(tag)}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                                <div class="link-card-stats">
+                                    <span class="visit-count">
+                                        <span class="icon">👆</span>
+                                        ${link.visitCount || 0}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="visit-trend">
+                            <div class="trend-title">近7天访问趋势</div>
+                            <div class="trend-bars">${renderTrendBars(link)}</div>
+                        </div>
+                        <div class="link-card-actions">
+                            <button class="action-btn favorite ${link.favorite ? 'active' : ''}" 
+                                onclick="toggleFavorite('${escapeJsString(link.id)}', event)">⭐</button>
+                            <button class="action-btn edit" 
+                                onclick="openEditLinkModal('${escapeJsString(link.id)}', event)">✏️</button>
+                            <button class="action-btn delete" 
+                                onclick="deleteLink('${escapeJsString(link.id)}', event)">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (isBatchMode) document.body.classList.add('batch-mode');
+            else document.body.classList.remove('batch-mode');
+        }
+
+        function renderTags() {
+            const container = document.getElementById('filter-tags');
+            const filtered = getFilteredLinks();
+            const allTags = new Set();
+            filtered.forEach(link => { if (link.tags) link.tags.forEach(tag => allTags.add(tag)); });
+
+            let html = `<span class="filter-tag ${!searchQuery && !currentCategory ? 'active' : ''}" onclick="clearFilters()">全部</span>`;
+            
+            data.categories.forEach(cat => {
+                const count = filtered.filter(l => l.categoryId === cat.id).length;
+                if (count > 0) {
+                    html += `<span class="filter-tag ${currentCategory === cat.id ? 'active' : ''}" 
+                        onclick="selectCategory('${escapeJsString(cat.id)}')">${escapeHtml(cat.name)}</span>`;
+                }
+            });
+
+            if (allTags.size > 0) {
+                html += Array.from(allTags).map(tag => `
+                    <span class="filter-tag" onclick="filterByTag('${escapeJsString(tag)}')">#${escapeHtml(tag)}</span>
+                `).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
+        function clearFilters() {
+            searchQuery = '';
+            currentCategory = null;
+            currentView = 'all';
+            document.getElementById('search-input').value = '';
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('[data-view="all"]').classList.add('active');
+            updatePageTitle();
+            renderLinks();
+            renderTags();
+        }
+
+        function filterByTag(tag) {
+            searchQuery = tag;
+            document.getElementById('search-input').value = tag;
+            renderLinks();
+            renderTags();
+        }
+
+        function renderRecentBar() {
+            const bar = document.getElementById('recent-bar');
+            const recentLinks = getRecentLinks();
+            
+            if (recentLinks.length === 0) { bar.style.display = 'none'; return; }
+
+            bar.style.display = 'flex';
+            bar.innerHTML = '<span class="recent-bar-title">最近访问：</span>' + 
+                recentLinks.map(link => `
+                    <div class="recent-link" onclick="visitLink('${escapeJsString(link.id)}', '${escapeJsString(link.url)}')">
+                        <span class="favicon">${getFaviconEmoji(link.url)}</span>
+                        <span>${escapeHtml(link.title)}</span>
+                    </div>
+                `).join('');
+        }
+
+        function getRecentLinks() {
+            return data.links.filter(l => l.lastVisitedAt).sort((a, b) => b.lastVisitedAt - a.lastVisitedAt).slice(0, MAX_RECENT_VISITS);
+        }
+
+        function updateStats() {
+            document.getElementById('all-count').textContent = data.links.length;
+            document.getElementById('favorites-count').textContent = data.links.filter(l => l.favorite).length;
+            document.getElementById('total-links').textContent = data.links.length;
+            document.getElementById('total-favorites').textContent = data.links.filter(l => l.favorite).length;
+            document.getElementById('total-clicks').textContent = data.links.reduce((sum, l) => sum + (l.visitCount || 0), 0);
+        }
+
+        function handleLinkClick(linkId, event) {
+            if (event.target.closest('.checkbox-wrapper') || 
+                event.target.closest('.link-card-actions') ||
+                event.target.tagName === 'INPUT') return;
+            const link = data.links.find(l => l.id === linkId);
+            if (link) visitLink(linkId, link.url);
+        }
+
+        function visitLink(linkId, url) {
+            const link = data.links.find(l => l.id === linkId);
+            if (link) {
+                link.visitCount = (link.visitCount || 0) + 1;
+                link.lastVisitedAt = Date.now();
+                link.history = link.history || [];
+                link.history.push(Date.now());
+                if (link.history.length > 100) link.history = link.history.slice(-100);
+                saveData();
+                renderLinks();
+                renderRecentBar();
+                updateStats();
+            }
+            window.open(url, '_blank');
+        }
+
+        function getFaviconEmoji(url) {
+            if (url.includes('jenkins')) return '🔧';
+            if (url.includes('gitlab')) return '🐙';
+            if (url.includes('jira')) return '📋';
+            if (url.includes('figma') || url.includes('sketch')) return '🎨';
+            if (url.includes('grafana') || url.includes('prometheus')) return '📊';
+            if (url.includes('test') || url.includes('staging')) return '🧪';
+            if (url.includes('baidu') || url.includes('google')) return '🔍';
+            if (url.includes('github')) return '🐱';
+            if (url.includes('dingtalk') || url.includes('wechat')) return '💬';
+            return '🌐';
+        }
+
+        function truncateUrl(url) { return url.length <= 45 ? url : url.substring(0, 45) + '...'; }
+
+        function handleUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('action') === 'add') {
+                const title = params.get('title') || '';
+                const url = params.get('url') || '';
+                const category = params.get('category') || '';
+                const tags = params.get('tags') || '';
+                
+                setTimeout(() => {
+                    document.getElementById('modal-title').textContent = '添加链接';
+                    document.getElementById('link-form').reset();
+                    document.getElementById('link-id').value = '';
+                    document.getElementById('link-title').value = decodeURIComponent(title);
+                    document.getElementById('link-url').value = decodeURIComponent(url);
+                    document.getElementById('link-category').value = decodeURIComponent(category);
+                    document.getElementById('link-tags').value = decodeURIComponent(tags);
+                    document.getElementById('link-favorite').checked = false;
+                    populateCategoryOptions();
+                    openModal('link-modal');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 100);
+            }
+        }
+
+        function openAddLinkModal() {
+            document.getElementById('modal-title').textContent = '添加链接';
+            document.getElementById('link-form').reset();
+            document.getElementById('link-id').value = '';
+            document.getElementById('link-favorite').checked = false;
+            document.getElementById('link-category').value = '';
+            populateCategoryOptions();
+            openModal('link-modal');
+        }
+
+        function populateCategoryOptions() {
+            const options = document.getElementById('category-options');
+            options.innerHTML = data.categories.map(cat => 
+                `<option value="${escapeHtml(cat.name)}">`
+            ).join('');
+        }
+
+        function openEditLinkModal(linkId) {
+            const link = data.links.find(l => l.id === linkId);
+            if (!link) return;
+            populateCategoryOptions();
+            document.getElementById('modal-title').textContent = '编辑链接';
+            document.getElementById('link-id').value = link.id;
+            document.getElementById('link-title').value = link.title;
+            document.getElementById('link-url').value = link.url;
+            const category = data.categories.find(c => c.id === link.categoryId);
+            document.getElementById('link-category').value = category ? category.name : '';
+            document.getElementById('link-tags').value = link.tags ? link.tags.join(', ') : '';
+            document.getElementById('link-favorite').checked = link.favorite || false;
+            openModal('link-modal');
+        }
+
+        function openSettingsModal() { openModal('settings-modal'); }
+        function openModal(modalId) { document.getElementById(modalId).classList.add('show'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
+
+        function saveLink() {
+            const id = document.getElementById('link-id').value;
+            const title = document.getElementById('link-title').value.trim();
+            const url = document.getElementById('link-url').value.trim();
+            const categoryName = document.getElementById('link-category').value.trim();
+            const tagsInput = document.getElementById('link-tags').value.trim();
+            const favorite = document.getElementById('link-favorite').checked;
+
+            if (!title) { alert('请填写链接名称'); return; }
+            if (!url) { alert('请填写URL'); return; }
+            if (!validateUrl(url)) { alert('请输入有效的URL地址（需以 http:// 或 https:// 开头）'); return; }
+
+            const categoryId = getCategoryIdByName(categoryName);
+            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            if (id) {
+                const link = data.links.find(l => l.id === id);
+                if (link) {
+                    link.title = title;
+                    link.url = url;
+                    link.categoryId = categoryId;
+                    link.tags = tags;
+                    link.favorite = favorite;
+                }
+            } else {
+                data.links.push({
+                    id: generateId(),
+                    title, url, categoryId, tags, favorite,
+                    visitCount: 0,
+                    lastVisitedAt: null,
+                    history: []
+                });
+            }
+
+            saveData();
+            closeModal('link-modal');
+            renderCategories();
+            renderLinks();
+            renderTags();
+            renderRecentBar();
+            updateStats();
+        }
+
+        function deleteLink(linkId, event) {
+            event.stopPropagation();
+            if (!confirm('确定要删除这个链接吗？')) return;
+            data.links = data.links.filter(l => l.id !== linkId);
+            selectedLinks.delete(linkId);
+            saveData();
+            renderCategories();
+            renderLinks();
+            renderTags();
+            renderRecentBar();
+            updateStats();
+            updateBatchModeBar();
+        }
+
+        function toggleFavorite(linkId, event) {
+            event.stopPropagation();
+            const link = data.links.find(l => l.id === linkId);
+            if (link) {
+                link.favorite = !link.favorite;
+                saveData();
+                renderLinks();
+                renderCategories();
+                updateStats();
+            }
+        }
+
+        function toggleBatchMode() {
+            isBatchMode = !isBatchMode;
+            const btn = document.getElementById('batch-btn');
+            btn.textContent = isBatchMode ? '✓ 批量模式' : '批量';
+            if (!isBatchMode) {
+                selectedLinks.clear();
+                document.body.classList.remove('batch-mode');
+            }
+            updateBatchModeBar();
+            renderLinks();
+        }
+
+        function updateBatchModeBar() {
+            const bar = document.getElementById('batch-mode-bar');
+            const count = document.getElementById('selected-count');
+            bar.style.display = isBatchMode ? 'flex' : 'none';
+            count.textContent = selectedLinks.size;
+        }
+
+        function toggleLinkSelection(linkId, checked) {
+            if (checked) selectedLinks.add(linkId);
+            else selectedLinks.delete(linkId);
+            updateBatchModeBar();
+            renderLinks();
+        }
+
+        function batchMove() {
+            if (selectedLinks.size === 0) { alert('请先选择要移动的链接'); return; }
+            const categoryId = document.getElementById('batch-category').value;
+            data.links.forEach(link => {
+                if (selectedLinks.has(link.id)) link.categoryId = categoryId;
+            });
+            saveData();
+            toggleBatchMode();
+            renderCategories();
+            renderLinks();
+            renderTags();
+        }
+
+        function batchDelete() {
+            if (selectedLinks.size === 0) { alert('请先选择要删除的链接'); return; }
+            if (!confirm(`确定要删除选中的 ${selectedLinks.size} 个链接吗？`)) return;
+            data.links = data.links.filter(l => !selectedLinks.has(l.id));
+            saveData();
+            toggleBatchMode();
+            renderCategories();
+            renderLinks();
+            renderTags();
+            renderRecentBar();
+            updateStats();
+        }
+
+        function exportData() {
+            const content = JSON.stringify(data, null, 2);
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const date = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `teamNav_backup_${date}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (data.links.length > 0 && !confirm(`当前已有 ${data.links.length} 个链接，导入将覆盖所有数据，确定继续？`)) return;
+                    data = imported;
+                    saveData();
+                    init();
+                    closeModal('settings-modal');
+                    alert('导入成功！');
+                } catch (err) { alert('导入失败：JSON格式错误'); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function importFromText() {
+            const text = document.getElementById('import-textarea').value;
+            if (!text.trim()) { alert('请输入JSON数据'); return; }
+            try {
+                const imported = JSON.parse(text);
+                if (data.links.length > 0 && !confirm(`当前已有 ${data.links.length} 个链接，导入将覆盖所有数据，确定继续？`)) return;
+                data = imported;
+                saveData();
+                init();
+                closeModal('settings-modal');
+                alert('导入成功！');
+            } catch (err) { alert('导入失败：JSON格式错误'); }
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(r => console.log('Service Worker registered:', r))
+                    .catch(e => console.log('Service Worker registration failed:', e));
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>

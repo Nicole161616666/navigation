@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#4a6cf7">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <title>导航链接管理器</title>
+    <script type="module">
+        import 'https://cdn.jsdelivr.net/npm/@banana-ui/banana@1.18.1/dist/banana/banana.js';
+    </script>
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-primary: #1f2329;
+            --text-secondary: #646a73;
+            --border-color: #e5e6eb;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #667eea;
+            --bg-color: #1a1a2e;
+            --card-bg: #16213e;
+            --text-primary: #e8e8e8;
+            --text-secondary: #8b8b8b;
+            --border-color: #2d2d44;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .header {
+            position: fixed; top: 0; left: 0; right: 0;
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 16px;
+            padding-top: calc(12px + env(safe-area-inset-top));
+            z-index: 100;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .header h1 { font-size: 18px; font-weight: 600; }
+
+        .header-actions { display: flex; gap: 10px; }
+
+        .header-actions .action-btn {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #f0f5ff 0%, #e0ebff 100%);
+            color: var(--primary-color);
+            font-size: 18px;
+        }
+
+        .search-container {
+            padding: 100px 16px 16px;
+        }
+
+        
+
+        .category-tabs {
+            display: flex; gap: 8px; padding: 0 16px 16px;
+            overflow-x: auto; scrollbar-width: none;
+        }
+
+        .category-tabs::-webkit-scrollbar { display: none; }
+
+        .category-tab {
+            flex-shrink: 0; padding: 8px 16px;
+            background-color: var(--card-bg); border-radius: 20px;
+            font-size: 13px; color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+            cursor: pointer; white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .category-tab.active {
+            background-color: var(--primary-color); color: #fff;
+            border-color: var(--primary-color);
+        }
+
+        .recent-bar {
+            padding: 0 16px 16px;
+        }
+
+        .recent-bar-title {
+            font-size: 14px; font-weight: 600; color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .recent-links {
+            display: flex; gap: 8px; overflow-x: auto;
+            scrollbar-width: none; padding-bottom: 4px;
+        }
+
+        .recent-links::-webkit-scrollbar { display: none; }
+
+        .recent-link {
+            flex-shrink: 0; padding: 8px 14px;
+            background-color: var(--card-bg); border-radius: 20px;
+            font-size: 12px; color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            cursor: pointer; white-space: nowrap;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .recent-link:hover { background-color: rgba(74, 108, 247, 0.1); }
+
+        .link-list { padding: 0 16px; }
+
+        .link-card {
+            display: block;
+            background-color: var(--card-bg); border-radius: 16px;
+            padding: 16px; margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            position: relative;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .link-card-header {
+            display: flex; align-items: flex-start; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .link-card-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+        .link-card-url { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .link-card-favicon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background-color: var(--bg-color); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+
+        .link-card-body { display: flex; gap: 12px; }
+
+        .link-card-meta { flex: 1; }
+
+        .link-card-category {
+            display: inline-block; padding: 3px 10px;
+            background-color: rgba(250, 173, 20, 0.1);
+            color: #d48806; border-radius: 6px; font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        .link-card-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+
+        .link-tag {
+            padding: 2px 8px; background-color: rgba(74, 108, 247, 0.1);
+            color: var(--primary-color); border-radius: 4px; font-size: 11px;
+        }
+
+        .link-tag::before { content: '#'; margin-right: 2px; }
+
+        .link-card-stats {
+            display: flex; align-items: center; gap: 16px;
+            font-size: 12px; color: var(--text-secondary);
+        }
+
+        .link-card-actions {
+            position: absolute; top: 16px; right: 16px;
+            display: flex; gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px; height: 36px; border: none;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e8eaed 100%);
+            border-radius: 10px;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+            color: var(--text-secondary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .action-btn.favorite.active { color: #d48806; background: linear-gradient(135deg, #fffbe6 0%, #fff1b8 100%); }
+        .action-btn.edit { color: var(--primary-color); background: linear-gradient(135deg, #f0f5ff 0%, #e0ebff 100%); }
+        .action-btn.delete { color: #ff4d4f; background: linear-gradient(135deg, #fff1f0 0%, #ffe0de 100%); }
+
+        
+
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state .icon { font-size: 64px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state h3 { font-size: 18px; font-weight: 500; margin-bottom: 8px; }
+        .empty-state p { font-size: 14px; }
+
+        .category-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .category-option:last-child { border-bottom: none; }
+        .category-option:hover { background-color: var(--bg-color); }
+
+        .category-select-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .category-select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .category-select-trigger:active {
+            transform: scale(0.98);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .category-arrow {
+            font-size: 12px;
+            color: var(--text-secondary);
+            transition: transform 0.2s;
+        }
+
+        .category-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            margin-top: 6px;
+            background-color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            z-index: 1000;
+            max-height: 220px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .category-dropdown.show {
+            display: block;
+        }
+
+        .category-dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 14px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: background-color 0.15s ease;
+        }
+
+        .category-dropdown-item:last-child {
+            border-bottom: none;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .category-dropdown-item:first-child {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .category-dropdown-item:hover {
+            background-color: rgba(74, 108, 247, 0.05);
+        }
+
+        .category-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 12px;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background-color: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 8px 16px;
+            padding-bottom: calc(8px + env(safe-area-inset-bottom));
+            display: flex; align-items: center; justify-content: space-between;
+            z-index: 100;
+        }
+
+        .bottom-btn {
+            position: relative;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 8px 16px; border: none;
+            background: none; cursor: pointer;
+            font-size: 12px; color: var(--text-secondary);
+            border-radius: 10px; transition: all 0.2s ease;
+            min-width: 60px;
+        }
+
+        .bottom-btn.active { 
+            color: var(--primary-color); 
+            font-weight: 600;
+        }
+
+        .bottom-btn.active .icon {
+            transform: scale(1.1);
+        }
+
+        .bottom-btn .icon { 
+            font-size: 20px; 
+            margin-bottom: 2px; 
+            transition: transform 0.2s ease;
+        }
+
+        .bottom-btn .badge {
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            min-width: 16px;
+            height: 16px;
+            background-color: #ff4d4f;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+
+        .stats-info {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .fab {
+            position: fixed; bottom: 100px; right: 16px;
+            width: 60px; height: 60px; border-radius: 50%;
+            background: linear-gradient(135deg, #4a6cf7 0%, #6b8cff 100%); 
+            color: #fff;
+            border: none; font-size: 28px;
+            box-shadow: 0 6px 20px rgba(74, 108, 247, 0.5);
+            cursor: pointer; z-index: 99;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .fab:active {
+            transform: scale(0.92);
+            box-shadow: 0 3px 10px rgba(74, 108, 247, 0.3);
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: all 0.2s; display: flex; align-items: flex-end;
+        }
+
+        .modal-overlay.show { opacity: 1; visibility: visible; }
+
+        .modal {
+            width: 100%; max-height: 85vh;
+            background-color: var(--card-bg);
+            border-radius: 20px 20px 0 0;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.show .modal { transform: translateY(0); }
+
+        .modal-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 20px 20px 16px;
+        }
+
+        .modal-header h2 { font-size: 18px; font-weight: 600; }
+
+        .modal-body { padding: 0 20px 20px; }
+
+        .form-group { margin-bottom: 16px; }
+
+        .form-group label {
+            display: block; font-size: 14px; font-weight: 500;
+            margin-bottom: 6px; color: var(--text-primary);
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 12px 14px;
+            border: 1px solid var(--border-color); border-radius: 10px;
+            font-size: 14px; outline: none;
+            background-color: var(--bg-color); color: var(--text-primary);
+        }
+
+        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary-color); }
+
+        .form-group .hint { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .modal-footer {
+            padding: 16px 20px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+            border-top: 1px solid var(--border-color);
+        }
+
+        .import-export-area {
+            background-color: var(--bg-color); border-radius: 12px;
+            padding: 16px; margin-bottom: 16px;
+        }
+
+        .import-export-area h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+
+        .action-buttons {
+            display: flex; gap: 12px;
+        }
+
+        .import-btn, .export-btn {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 12px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .import-btn {
+            background: linear-gradient(135deg, #52c41a 0%, #73d13d 100%);
+            color: #fff;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #4a6cf7 0%, #6b8cff 100%);
+            color: #fff;
+        }
+
+        .import-btn:active, .export-btn:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .btn-text {
+            font-size: 13px;
+        }
+
+        .setting-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 16px 0; border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child { border-bottom: none; }
+
+        .setting-item .label { font-size: 15px; color: var(--text-primary); }
+        .setting-item .value { font-size: 14px; color: var(--text-secondary); }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔗 导航管理</h1>
+        <div class="header-actions">
+            <button class="action-btn" onclick="openSettingsModal()">⚙️</button>
+            <button class="action-btn" onclick="toggleTheme()" id="theme-toggle">🌙</button>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <bn-input placeholder="搜索链接..." id="search-input" clearable>
+            <bn-icon slot="prefix" name="search"></bn-icon>
+        </bn-input>
+    </div>
+
+    
+
+    <div class="category-tabs" id="category-tabs">
+        <span class="category-tab active" onclick="clearFilters()">全部</span>
+    </div>
+
+    <div class="recent-bar">
+        <div class="recent-bar-title">最近访问</div>
+        <div class="recent-links" id="recent-links"></div>
+    </div>
+
+    <div class="link-list" id="link-list"></div>
+
+    <button class="fab" onclick="openAddLinkModal()">➕</button>
+
+    <div class="bottom-bar">
+        <button class="bottom-btn active" id="btn-all" onclick="switchView('all', this)">
+            <span class="icon">📁</span>
+            <span>全部</span>
+        </button>
+        <button class="bottom-btn" id="btn-favorites" onclick="switchView('favorites', this)">
+            <span class="icon">⭐</span>
+            <span class="badge" id="total-favorites">0</span>
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="link-modal" onclick="closeModal('link-modal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modal-title">添加链接</h2>
+                <button class="action-btn" onclick="closeModal('link-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <form id="link-form">
+                    <input type="hidden" id="link-id">
+                    <div class="form-group">
+                        <label>链接名称 <span style="color: #ff4d4f;">*</span></label>
+                        <input type="text" id="link-title" placeholder="如：Jenkins 构建" required>
+                    </div>
+                    <div class="form-group">
+                        <label>URL <span style="color: #ff4d4f;">*</span></label>
+                        <input type="text" id="link-url" placeholder="https://..." required>
+                        <p class="hint">请输入完整的URL地址</p>
+                    </div>
+                    <div class="form-group">
+                        <label>分类</label>
+                        <div class="category-select-wrapper">
+                            <div class="category-select-trigger" onclick="toggleCategoryDropdown()">
+                                <span id="selected-category-text">请选择分类</span>
+                                <span class="category-arrow">▼</span>
+                            </div>
+                            <input type="hidden" id="link-category" value="">
+                            <div id="category-dropdown" class="category-dropdown">
+                                <div class="category-dropdown-item" data-value="" onclick="selectCategoryOption('', '全部（未分类）')">
+                                    <span class="category-dot" style="background-color: #8c8c8c;"></span>
+                                    <span>全部（未分类）</span>
+                                </div>
+                                <div class="category-dropdown-item" data-value="开发工具" onclick="selectCategoryOption('开发工具', '开发工具')">
+                                    <span class="category-dot" style="background-color: #4a6cf7;"></span>
+                                    <span>开发工具</span>
+                                </div>
+                                <div class="category-dropdown-item" data-value="项目管理" onclick="selectCategoryOption('项目管理', '项目管理')">
+                                    <span class="category-dot" style="background-color: #52c41a;"></span>
+                                    <span>项目管理</span>
+                                </div>
+                                <div class="category-dropdown-item" data-value="设计资源" onclick="selectCategoryOption('设计资源', '设计资源')">
+                                    <span class="category-dot" style="background-color: #ff7875;"></span>
+                                    <span>设计资源</span>
+                                </div>
+                                <div class="category-dropdown-item" data-value="测试环境" onclick="selectCategoryOption('测试环境', '测试环境')">
+                                    <span class="category-dot" style="background-color: #faad14;"></span>
+                                    <span>测试环境</span>
+                                </div>
+                                <div class="category-dropdown-item" data-value="监控告警" onclick="selectCategoryOption('监控告警', '监控告警')">
+                                    <span class="category-dot" style="background-color: #722ed1;"></span>
+                                    <span>监控告警</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>标签</label>
+                        <input type="text" id="link-tags" placeholder="多个标签用英文逗号分隔">
+                    </div>
+                    <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                        <label>添加到收藏</label>
+                        <bn-switch id="link-favorite"></bn-switch>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <bn-button type="primary" block onclick="saveLink()">保存</bn-button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settings-modal" onclick="closeModal('settings-modal')">
+        <div class="modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>设置</h2>
+                <button class="action-btn" onclick="closeModal('settings-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-export-area">
+                    <h3>📦 数据导入/导出</h3>
+                    <div class="action-buttons">
+                        <button class="import-btn" onclick="document.getElementById('import-file').click()">
+                            <span class="btn-icon">📥</span>
+                            <span class="btn-text">导入数据</span>
+                        </button>
+                        <button class="export-btn" onclick="exportData()">
+                            <span class="btn-icon">📤</span>
+                            <span class="btn-text">导出数据</span>
+                        </button>
+                    </div>
+                    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importFromFile(event)">
+                </div>
+
+                
+            </div>
+            <div class="modal-footer">
+                <bn-button type="primary" block onclick="closeModal('settings-modal')">关闭</bn-button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'team_nav_data';
+        const THEME_KEY = 'team_nav_theme';
+        const MAX_RECENT_VISITS = 10;
+
+        let data = {
+            links: [],
+            categories: [
+                { id: '1', name: '开发工具', color: '#4a6cf7' },
+                { id: '2', name: '项目管理', color: '#52c41a' },
+                { id: '3', name: '设计资源', color: '#ff7875' },
+                { id: '4', name: '测试环境', color: '#faad14' },
+                { id: '5', name: '监控告警', color: '#722ed1' },
+                { id: '6', name: '未分类', color: '#8c8c8c' }
+            ]
+        };
+
+        let currentView = 'all';
+        let currentCategory = null;
+        let searchQuery = '';
+
+        function init() {
+            loadData();
+            loadTheme();
+            renderCategories();
+            renderLinks();
+            renderRecentBar();
+            updateStats();
+
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    searchQuery = e.target.value.toLowerCase();
+                    renderLinks();
+                });
+            }
+        }
+
+        function loadData() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    data = { ...data, ...parsed };
+                }
+            } catch (e) { console.error('Failed to load data:', e); }
+        }
+
+        function saveData() {
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+            catch (e) { console.error('Failed to save data:', e); }
+        }
+
+        function loadTheme() {
+            const theme = localStorage.getItem(THEME_KEY) || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('theme-toggle').textContent = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            localStorage.setItem(THEME_KEY, newTheme);
+        }
+
+        function generateId() { return Date.now().toString(36) + Math.random().toString(36).substr(2); }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>"']/g, char => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+            }[char]));
+        }
+
+        function validateUrl(url) { 
+            if (/^(https?:\/\/)[^\s$.?#].[^\s]*$/i.test(url)) return true;
+            if (/^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](\.[a-zA-Z]{2,})+(\/.*)?$/i.test(url)) return true;
+            return false;
+        }
+
+        function getCategoryIdByName(name) {
+            const trimmed = name.trim();
+            if (!trimmed) return '6';
+            let cat = data.categories.find(c => c.name.trim().toLowerCase() === trimmed.toLowerCase());
+            if (cat) return cat.id;
+            const colors = ['#4a6cf7', '#52c41a', '#ff7875', '#faad14', '#722ed1', '#13c2c2', '#eb2f96', '#fa541c', '#8c8c8c'];
+            cat = { id: generateId(), name: trimmed, color: colors[data.categories.length % colors.length] };
+            data.categories.push(cat);
+            return cat.id;
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('category-tabs');
+            let html = `<span class="category-tab ${!currentCategory && currentView === 'all' ? 'active' : ''}" onclick="clearFilters()">全部</span>`;
+            
+            data.categories.forEach(cat => {
+                const count = data.links.filter(l => l.categoryId === cat.id).length;
+                if (count > 0) {
+                    html += `<span class="category-tab ${currentCategory === cat.id ? 'active' : ''}" 
+                        onclick="selectCategory('${cat.id}')">${cat.name}</span>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function selectCategory(categoryId) {
+            currentCategory = categoryId;
+            currentView = 'category';
+            renderCategories();
+            renderLinks();
+        }
+
+        function switchView(view, btn) {
+            currentView = view;
+            currentCategory = null;
+            document.querySelectorAll('.bottom-btn').forEach(btn => btn.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            renderCategories();
+            renderLinks();
+        }
+
+        function clearFilters() {
+            searchQuery = '';
+            currentCategory = null;
+            currentView = 'all';
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = '';
+            document.querySelectorAll('.bottom-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.bottom-btn').classList.add('active');
+            renderCategories();
+            renderLinks();
+        }
+
+        function getFilteredLinks() {
+            let filtered = data.links;
+            if (currentView === 'favorites') filtered = filtered.filter(l => l.favorite);
+            else if (currentView === 'category' && currentCategory) filtered = filtered.filter(l => l.categoryId === currentCategory);
+
+            if (searchQuery) {
+                filtered = filtered.filter(l => 
+                    l.title.toLowerCase().includes(searchQuery) ||
+                    l.url.toLowerCase().includes(searchQuery) ||
+                    (l.tags && l.tags.some(t => t.toLowerCase().includes(searchQuery)))
+                );
+            }
+
+            filtered.sort((a, b) => {
+                if (a.favorite !== b.favorite) return a.favorite ? -1 : 1;
+                return (b.visitCount || 0) - (a.visitCount || 0);
+            });
+
+            return filtered;
+        }
+
+        function renderLinks() {
+            const list = document.getElementById('link-list');
+            const filtered = getFilteredLinks();
+
+            if (filtered.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">🔗</div>
+                        <h3>${searchQuery ? '未找到匹配的链接' : '暂无链接'}</h3>
+                        <p>${searchQuery ? '尝试更换搜索关键词' : '点击右下角按钮开始添加'}</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.innerHTML = filtered.map(link => {
+                const category = data.categories.find(c => c.id === link.categoryId);
+                return `
+                    <a href="${escapeHtml(link.url.startsWith('http') ? link.url : 'https://' + link.url)}" 
+                           target="_blank" rel="noopener noreferrer" 
+                           onclick="visitLink('${link.id}', '${link.url}')"
+                           class="link-card">
+                        <div class="link-card-header">
+                            <div>
+                                <div class="link-card-title">${escapeHtml(link.title)}</div>
+                                <div class="link-card-url">${escapeHtml(truncateUrl(link.url))}</div>
+                            </div>
+                        </div>
+                        <div class="link-card-body">
+                            <div class="link-card-favicon">${getFaviconEmoji(link.url)}</div>
+                            <div class="link-card-meta">
+                                ${category ? `<div class="link-card-category">${escapeHtml(category.name)}</div>` : ''}
+                                ${link.tags && link.tags.length > 0 ? `
+                                    <div class="link-card-tags">
+                                        ${link.tags.map(tag => `<span class="link-tag">${escapeHtml(tag)}</span>`).join('')}
+                                    </div>
+                                ` : ''}
+                                <div class="link-card-stats">
+                                    <span>👆 ${link.visitCount || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="link-card-actions">
+                            <button class="action-btn favorite ${link.favorite ? 'active' : ''}" 
+                                onclick="event.preventDefault(); event.stopPropagation(); toggleFavorite('${link.id}')">⭐</button>
+                            <button class="action-btn edit" 
+                                onclick="event.preventDefault(); event.stopPropagation(); openEditLinkModal('${link.id}')">✏️</button>
+                            <button class="action-btn delete" 
+                                onclick="event.preventDefault(); event.stopPropagation(); deleteLink('${link.id}')">🗑️</button>
+                        </div>
+                    </a>
+                `;
+            }).join('');
+        }
+
+        function renderRecentBar() {
+            const container = document.getElementById('recent-links');
+            const recentLinks = getRecentLinks();
+            
+            if (recentLinks.length === 0) { container.innerHTML = '<span style="color: var(--text-secondary); font-size: 12px;">暂无记录</span>'; return; }
+
+            container.innerHTML = recentLinks.map(link => `
+                <div class="recent-link" onclick="visitLink('${link.id}', '${link.url}')">
+                    <span>${getFaviconEmoji(link.url)}</span>
+                    <span>${escapeHtml(link.title)}</span>
+                </div>
+            `).join('');
+        }
+
+        function getRecentLinks() {
+            return data.links.filter(l => l.lastVisitedAt).sort((a, b) => b.lastVisitedAt - a.lastVisitedAt).slice(0, MAX_RECENT_VISITS);
+        }
+
+        function updateStats() {
+            document.getElementById('total-links').textContent = data.links.length;
+            document.getElementById('total-favorites').textContent = data.links.filter(l => l.favorite).length;
+            document.getElementById('total-clicks').textContent = data.links.reduce((sum, l) => sum + (l.visitCount || 0), 0);
+        }
+
+        function visitLink(linkId, url) {
+            const link = data.links.find(l => l.id === linkId);
+            if (link) {
+                link.visitCount = (link.visitCount || 0) + 1;
+                link.lastVisitedAt = Date.now();
+                link.history = link.history || [];
+                link.history.push(Date.now());
+                if (link.history.length > 100) link.history = link.history.slice(-100);
+                saveData();
+                renderLinks();
+                renderRecentBar();
+                updateStats();
+            }
+            const fullUrl = url.startsWith('http') ? url : 'https://' + url;
+            const a = document.createElement('a');
+            a.href = fullUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function getFaviconEmoji(url) {
+            if (url.includes('jenkins')) return '🔧';
+            if (url.includes('gitlab')) return '🐙';
+            if (url.includes('jira')) return '📋';
+            if (url.includes('figma') || url.includes('sketch')) return '🎨';
+            if (url.includes('grafana') || url.includes('prometheus')) return '📊';
+            if (url.includes('test') || url.includes('staging')) return '🧪';
+            if (url.includes('baidu') || url.includes('google')) return '🔍';
+            if (url.includes('github')) return '🐱';
+            if (url.includes('dingtalk') || url.includes('wechat')) return '💬';
+            return '🌐';
+        }
+
+        function truncateUrl(url) { return url.length <= 35 ? url : url.substring(0, 35) + '...'; }
+
+        function openAddLinkModal() {
+            document.getElementById('modal-title').textContent = '添加链接';
+            document.getElementById('link-form').reset();
+            document.getElementById('link-id').value = '';
+            document.getElementById('link-category').value = '';
+            document.getElementById('selected-category-text').textContent = '请选择分类';
+            document.getElementById('category-dropdown').classList.remove('show');
+            const favSwitch = document.getElementById('link-favorite');
+            if (favSwitch) favSwitch.checked = false;
+            openModal('link-modal');
+        }
+
+        function openEditLinkModal(linkId) {
+            const link = data.links.find(l => l.id === linkId);
+            if (!link) return;
+            document.getElementById('modal-title').textContent = '编辑链接';
+            document.getElementById('link-id').value = link.id;
+            document.getElementById('link-title').value = link.title;
+            document.getElementById('link-url').value = link.url;
+            const category = data.categories.find(c => c.id === link.categoryId);
+            document.getElementById('link-category').value = category ? category.name : '';
+            document.getElementById('selected-category-text').textContent = category ? category.name : '请选择分类';
+            document.getElementById('link-tags').value = link.tags ? link.tags.join(', ') : '';
+            document.getElementById('category-dropdown').classList.remove('show');
+            const favSwitch = document.getElementById('link-favorite');
+            if (favSwitch) favSwitch.checked = link.favorite || false;
+            openModal('link-modal');
+        }
+
+        function openSettingsModal() { openModal('settings-modal'); }
+        function openModal(modalId) { document.getElementById(modalId).classList.add('show'); }
+        function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); document.getElementById('category-dropdown').classList.remove('show'); }
+
+        function toggleCategoryDropdown() {
+            document.getElementById('category-dropdown').classList.toggle('show');
+        }
+
+        function selectCategoryOption(value, text) {
+            document.getElementById('link-category').value = value;
+            document.getElementById('selected-category-text').textContent = text;
+            document.getElementById('category-dropdown').classList.remove('show');
+        }
+
+        function saveLink() {
+            const id = document.getElementById('link-id').value;
+            const title = document.getElementById('link-title').value.trim();
+            const url = document.getElementById('link-url').value.trim();
+            const categoryName = document.getElementById('link-category').value.trim();
+            const tagsInput = document.getElementById('link-tags').value.trim();
+            const favSwitch = document.getElementById('link-favorite');
+            const favorite = favSwitch ? favSwitch.checked : false;
+
+            if (!title) { alert('请填写链接名称'); return; }
+            if (!url) { alert('请填写URL'); return; }
+            if (!validateUrl(url)) { alert('请输入有效的URL地址'); return; }
+
+            const categoryId = getCategoryIdByName(categoryName);
+            const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(t => t) : [];
+
+            if (id) {
+                const link = data.links.find(l => l.id === id);
+                if (link) {
+                    link.title = title;
+                    link.url = url;
+                    link.categoryId = categoryId;
+                    link.tags = tags;
+                    link.favorite = favorite;
+                }
+            } else {
+                data.links.push({
+                    id: generateId(),
+                    title, url, categoryId, tags, favorite,
+                    visitCount: 0,
+                    lastVisitedAt: null,
+                    history: []
+                });
+            }
+
+            saveData();
+            closeModal('link-modal');
+            renderCategories();
+            renderLinks();
+            renderRecentBar();
+            updateStats();
+        }
+
+        function deleteLink(linkId) {
+            if (!confirm('确定要删除这个链接吗？')) return;
+            data.links = data.links.filter(l => l.id !== linkId);
+            saveData();
+            renderCategories();
+            renderLinks();
+            renderRecentBar();
+            updateStats();
+        }
+
+        function toggleFavorite(linkId) {
+            const link = data.links.find(l => l.id === linkId);
+            if (link) {
+                link.favorite = !link.favorite;
+                saveData();
+                renderLinks();
+                updateStats();
+            }
+        }
+
+        function exportData() {
+            const content = JSON.stringify(data, null, 2);
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const date = new Date().toISOString().split('T')[0];
+            a.href = url;
+            a.download = `teamNav_backup_${date}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function importFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (data.links.length > 0 && !confirm(`当前已有 ${data.links.length} 个链接，导入将覆盖所有数据，确定继续？`)) return;
+                    data = imported;
+                    saveData();
+                    init();
+                    closeModal('settings-modal');
+                    alert('导入成功！');
+                } catch (err) { alert('导入失败：JSON格式错误'); }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(r => console.log('Service Worker registered:', r))
+                    .catch(e => console.log('Service Worker registration failed:', e));
+            });
+        }
+
+        init();
+    </script>
+</body>
+</html>
