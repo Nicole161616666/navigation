@@ -1,7 +1,9 @@
-const CACHE_NAME = 'nav-manager-v1';
+const CACHE_NAME = 'nav-manager-v2';
 const CACHE_ASSETS = [
     '/',
     '/index.html',
+    '/pc.html',
+    '/mobile.html',
     '/manifest.json',
     '/icon.svg'
 ];

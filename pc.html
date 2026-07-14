@@ -535,12 +535,6 @@
                         <label>标签</label>
                         <input type="text" id="link-tags" placeholder="多个标签用英文逗号分隔，如：前端,部署,工具">
                     </div>
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="link-favorite">
-                            添加到收藏
-                        </label>
-                    </div>
                 </form>
             </div>
             <div class="modal-footer">
@@ -829,10 +823,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="visit-trend">
-                            <div class="trend-title">近7天访问趋势</div>
-                            <div class="trend-bars">${renderTrendBars(link)}</div>
-                        </div>
                         <div class="link-card-actions">
                             <button class="action-btn favorite ${link.favorite ? 'active' : ''}" 
                                 onclick="toggleFavorite('${escapeJsString(link.id)}', event)">⭐</button>
@@ -976,7 +966,6 @@
                     document.getElementById('link-url').value = decodeURIComponent(url);
                     document.getElementById('link-category').value = decodeURIComponent(category);
                     document.getElementById('link-tags').value = decodeURIComponent(tags);
-                    document.getElementById('link-favorite').checked = false;
                     populateCategoryOptions();
                     openModal('link-modal');
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -988,7 +977,6 @@
             document.getElementById('modal-title').textContent = '添加链接';
             document.getElementById('link-form').reset();
             document.getElementById('link-id').value = '';
-            document.getElementById('link-favorite').checked = false;
             document.getElementById('link-category').value = '';
             populateCategoryOptions();
             openModal('link-modal');
@@ -1012,7 +1000,6 @@
             const category = data.categories.find(c => c.id === link.categoryId);
             document.getElementById('link-category').value = category ? category.name : '';
             document.getElementById('link-tags').value = link.tags ? link.tags.join(', ') : '';
-            document.getElementById('link-favorite').checked = link.favorite || false;
             openModal('link-modal');
         }
 
@@ -1026,7 +1013,6 @@
             const url = document.getElementById('link-url').value.trim();
             const categoryName = document.getElementById('link-category').value.trim();
             const tagsInput = document.getElementById('link-tags').value.trim();
-            const favorite = document.getElementById('link-favorite').checked;
 
             if (!title) { alert('请填写链接名称'); return; }
             if (!url) { alert('请填写URL'); return; }
@@ -1042,12 +1028,11 @@
                     link.url = url;
                     link.categoryId = categoryId;
                     link.tags = tags;
-                    link.favorite = favorite;
                 }
             } else {
                 data.links.push({
                     id: generateId(),
-                    title, url, categoryId, tags, favorite,
+                    title, url, categoryId, tags, favorite: false,
                     visitCount: 0,
                     lastVisitedAt: null,
                     history: []

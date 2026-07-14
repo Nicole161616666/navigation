@@ -4,15 +4,30 @@
     "description": "快速访问常用链接，支持分类管理、收藏、搜索和批量操作",
     "version": "1.0.0",
     "start_url": "/index.html",
-    "display": "standalone",
+    "display": "browser",
     "orientation": "any",
     "background_color": "#f5f7fa",
     "theme_color": "#4a6cf7",
+    "scope": "/",
+    "lang": "zh-CN",
     "icons": [
         {
             "src": "icon.svg",
             "sizes": "any",
-            "type": "image/svg+xml"
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "icon.svg",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icon.svg",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any"
         }
     ]
 }

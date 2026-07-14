@@ -331,22 +331,7 @@
             transition: transform 0.2s ease;
         }
 
-        .bottom-btn .badge {
-            position: absolute;
-            top: 2px;
-            right: 8px;
-            min-width: 16px;
-            height: 16px;
-            background-color: #ff4d4f;
-            color: #fff;
-            font-size: 10px;
-            font-weight: 600;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0 4px;
-        }
+        
 
         .stats-info {
             display: flex; align-items: center; gap: 8px;
@@ -483,6 +468,33 @@
 
         .setting-item .label { font-size: 15px; color: var(--text-primary); }
         .setting-item .value { font-size: 14px; color: var(--text-secondary); }
+
+        .save-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #4a6cf7 0%, #5c7cfa 100%);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 6px 20px rgba(74, 108, 247, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .save-btn:active {
+            transform: scale(0.98);
+            box-shadow: 0 3px 10px rgba(74, 108, 247, 0.3);
+        }
+
+        .save-icon {
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -522,7 +534,6 @@
         </button>
         <button class="bottom-btn" id="btn-favorites" onclick="switchView('favorites', this)">
             <span class="icon">⭐</span>
-            <span class="badge" id="total-favorites">0</span>
         </button>
     </div>
 
@@ -591,7 +602,10 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <bn-button type="primary" block onclick="saveLink()">保存</bn-button>
+                <button class="save-btn" onclick="saveLink()">
+                    <span class="save-icon">✅</span>
+                    <span>保存链接</span>
+                </button>
             </div>
         </div>
     </div>
@@ -626,6 +640,24 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="delete-confirm-modal" onclick="closeModal('delete-confirm-modal')">
+        <div class="modal" onclick="event.stopPropagation()" style="max-height: 300px;">
+            <div class="modal-header">
+                <h2>删除确认</h2>
+                <button class="action-btn" onclick="closeModal('delete-confirm-modal')">✕</button>
+            </div>
+            <div class="modal-body">
+                <p style="text-align: center; font-size: 15px; color: var(--text-primary); margin-top: 20px;">确定要删除这个链接吗？</p>
+            </div>
+            <div class="modal-footer">
+                <div style="display: flex; gap: 12px;">
+                    <bn-button type="default" block onclick="closeModal('delete-confirm-modal')">取消</bn-button>
+                    <bn-button type="danger" block onclick="confirmDelete()">删除</bn-button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const STORAGE_KEY = 'team_nav_data';
         const THEME_KEY = 'team_nav_theme';
@@ -646,6 +678,7 @@
         let currentView = 'all';
         let currentCategory = null;
         let searchQuery = '';
+        let deleteLinkId = null;
 
         function init() {
             loadData();
@@ -653,7 +686,6 @@
             renderCategories();
             renderLinks();
             renderRecentBar();
-            updateStats();
 
             const searchInput = document.getElementById('search-input');
             if (searchInput) {
@@ -857,12 +889,6 @@
             return data.links.filter(l => l.lastVisitedAt).sort((a, b) => b.lastVisitedAt - a.lastVisitedAt).slice(0, MAX_RECENT_VISITS);
         }
 
-        function updateStats() {
-            document.getElementById('total-links').textContent = data.links.length;
-            document.getElementById('total-favorites').textContent = data.links.filter(l => l.favorite).length;
-            document.getElementById('total-clicks').textContent = data.links.reduce((sum, l) => sum + (l.visitCount || 0), 0);
-        }
-
         function visitLink(linkId, url) {
             const link = data.links.find(l => l.id === linkId);
             if (link) {
@@ -874,7 +900,6 @@
                 saveData();
                 renderLinks();
                 renderRecentBar();
-                updateStats();
             }
             const fullUrl = url.startsWith('http') ? url : 'https://' + url;
             const a = document.createElement('a');
@@ -984,17 +1009,23 @@
             renderCategories();
             renderLinks();
             renderRecentBar();
-            updateStats();
         }
 
         function deleteLink(linkId) {
-            if (!confirm('确定要删除这个链接吗？')) return;
-            data.links = data.links.filter(l => l.id !== linkId);
-            saveData();
-            renderCategories();
-            renderLinks();
-            renderRecentBar();
-            updateStats();
+            deleteLinkId = linkId;
+            openModal('delete-confirm-modal');
+        }
+
+        function confirmDelete() {
+            if (deleteLinkId) {
+                data.links = data.links.filter(l => l.id !== deleteLinkId);
+                saveData();
+                renderCategories();
+                renderLinks();
+                renderRecentBar();
+                deleteLinkId = null;
+            }
+            closeModal('delete-confirm-modal');
         }
 
         function toggleFavorite(linkId) {
@@ -1003,7 +1034,6 @@
                 link.favorite = !link.favorite;
                 saveData();
                 renderLinks();
-                updateStats();
             }
         }
 
